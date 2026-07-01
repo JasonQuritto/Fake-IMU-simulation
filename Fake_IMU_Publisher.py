@@ -47,5 +47,3 @@ class FakeIMUPublisher(rclpy.node):
         
     if __name__ == "__main__":
         main()
-
-        
