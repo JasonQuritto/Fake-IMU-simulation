@@ -1,5 +1,6 @@
 import rclpy
 from sensor_msgs.msg import Imu
+from rclpy.node import Node
 import random
 
 
@@ -30,7 +31,21 @@ class FakeIMUPublisher(rclpy.node):
         msg.linear_acceleration.z = random.uniform(9.5, 10)
 
         self.publisher_.publish(msg)
-        self.get_logger().info("Fake IMU data")
+        self.get_logger().info(f"Fake IMU data: \n{msg}")
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = FakeIMUPublisher()
 
+        try:
+            rclpy.spin(node)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            node.destroy_node()
+            rclpy.shutdown()
+        
+    if __name__ == "__main__":
+        main()
 
         
