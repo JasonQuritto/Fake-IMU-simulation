@@ -9,7 +9,7 @@ class FakeIMUPublisher(rclpy.node):
         super().__init__("imu_subscriber")
         self.publisher_ = self.create_publisher(Imu, "/imu/data", 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.get_logger().info("Fake IMU Publisher zostal uruchomiony.")
+        self.get_logger().info("Fake IMU Publisher got activated.")
     
     def timer_callback(self):
         msg = Imu()
