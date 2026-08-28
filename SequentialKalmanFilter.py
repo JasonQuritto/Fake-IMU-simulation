@@ -5,14 +5,14 @@ class SequentialKalmanFilter:
         self.dim_z = dim_z
         self.dim_x = dim_x
 
-        self.x = np.zeros(dim_x, 1)
+        self.x = np.zeros((dim_x, 1))
         self.P = np.eye(dim_x)
         self.Q = np.eye(dim_x)
 
 
     def predict(self, dt):
         # State transition matrix
-        F = np.array([1, dt], [0, 1])
+        F = np.array([[1, dt], [0, 1]])
 
         # Predicted state and covariance matrix
         self.x = F @ self.x
