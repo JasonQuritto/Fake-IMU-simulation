@@ -3,6 +3,7 @@ from sensor_msgs.msg import Imu
 from rclpy.node import Node
 import SequentialKalmanFilter
 import numpy as np
+from Utils import linear_to_angular
 
 class MultiIMUFusionSubscriber(Node):
     def __init__(self, n_imus):
@@ -30,10 +31,10 @@ class MultiIMUFusionSubscriber(Node):
 
     def timer_predict_callback(self):
         self.KF.predict(self.dt)
-
     
     def listener_callback(self, msg, imu_id):
-        z = np.array([[msg.angular_velocity.z]])
+
+        z = self.linear_to_angular(msg)
 
         # Checking if measurement passed the test
         accepted = self.KF.update(z, self.R)
