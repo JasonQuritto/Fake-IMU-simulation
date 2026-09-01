@@ -2,10 +2,11 @@ import rclpy
 from sensor_msgs.msg import Imu
 from rclpy.node import Node
 import random
-
+import math
+import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 class MultiIMUPublisher(Node):
-
 
     def __init__(self, n_imus=2):
         super().__init__("Multi_imu_publisher")
@@ -18,9 +19,10 @@ class MultiIMUPublisher(Node):
             self.publishers_list.append(pub)
 
         # callback which makes all sensors publicate their data on different topics
-        self.timer = self.create_timer(1, self.timer_callback)
+        self.timer = self.create_timer(0.02, self.timer_callback)
         self.get_logger().info("Multi IMU Publisher zostal uruchomiony.")
-    
+
+
     def timer_callback(self):
         for i, pub in enumerate(self.publishers_list):
 
@@ -37,26 +39,31 @@ class MultiIMUPublisher(Node):
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.header.frame_id = "fake_imu"
 
-            msg.orientation.x = random.uniform(-1.0, 1.0)
-            msg.orientation.y = random.uniform(-1.0, 1.0)
-            msg.orientation.z = random.uniform(-1.0, 1.0)
-            msg.orientation.w = random.uniform(-1.0, 1.0)
+            t = self.get_clock().now().nanoseconds / 1e9
 
-            msg.angular_velocity.x = random.uniform(-0.5, 0.5)
-            msg.angular_velocity.y = random.uniform(-0.5, 0.5)
-            msg.angular_velocity.z = random.uniform(-0.5, 0.5)
-            
-            msg.linear_acceleration.x = random.uniform(0, 2.0)
-            msg.linear_acceleration.y = random.uniform(0, 2.0)
-            msg.linear_acceleration.z = random.uniform(9.5, 10)
+            yaw = math.pi * math.sin(2 * math.pi * 0.05 * t)
+            w_z = 0.3 * (2 * math.pi * 0.2) * math.cos(2 * math.pi * 0.05 * t)
 
-            self.publisher_.publish(msg)
-            self.get_logger().info(f"IMU data:\n"
-                                f"orient: [{msg.orientation.x:.2f}, {msg.orientation.y:.2f}, {msg.orientation.z:.2f}, {msg.orientation.w:.2f}],\n"
-                                f"accel: [{msg.linear_acceleration.x:.2f}, {msg.linear_acceleration.y:.2f}, {msg.linear_acceleration.z:.2f}],\n"
-                                f"gyro: [{msg.angular_velocity.x:.2f}, {msg.angular_velocity.y:.2f}, {msg.angular_velocity.z:.2f}]\n"
-                )
-        
+            noisy_yaw = yaw + np.random.normal(0, 0.02)
+            noisy_w_z = w_z + np.random.normal(0, 0.005)
+
+            r = R.from_euler('xyz', [0.0, 0.0, noisy_yaw])
+            quat = r.as_quat()
+
+            msg.orientation.x = quat[0]
+            msg.orientation.y = quat[1]
+            msg.orientation.z = quat[2]
+            msg.orientation.w = quat[3]
+
+            msg.angular_velocity.z = noisy_w_z
+
+            pub.publish(msg)
+            self.get_logger().info(
+                f"IMU{i} data:\n"
+                f"orient: [{msg.orientation.x:.2f}, {msg.orientation.y:.2f}, {msg.orientation.z:.2f}, {msg.orientation.w:.2f}],\n"
+                f"gyro: [{msg.angular_velocity.x:.2f}, {msg.angular_velocity.y:.2f}, {msg.angular_velocity.z:.2f}]\n"
+            )
+
 
 def main(args=None):
     rclpy.init(args=args)
