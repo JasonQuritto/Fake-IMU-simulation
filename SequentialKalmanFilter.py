@@ -51,7 +51,7 @@ class SequentialKalmanFilter:
             self.consecutive_rejects += 1
             self.P *= 1.15
 
-            # if measurement has been rejected more than 10 times it resets
+            # If measurement has been rejected more than 10 times it resets
             if self.consecutive_rejects >= self.max_rejects:
                 self.x = z.copy()
                 self.P = np.eye(self.dim_x) * 0.1
