@@ -41,13 +41,24 @@ class MultiIMUPublisher(Node):
 
             t = self.get_clock().now().nanoseconds / 1e9
 
-            yaw = math.pi * math.sin(2 * math.pi * 0.05 * t)
-            w_z = 0.3 * (2 * math.pi * 0.2) * math.cos(2 * math.pi * 0.05 * t)
 
+            roll = math.pi * math.sin(2 * math.pi * 0.05 * t)
+            pitch = math.pi * math.sin(2 * math.pi * 0.05 * t)
+            yaw = math.pi * math.sin(2 * math.pi * 0.05 * t)
+            w_x = 0.3 * (2 * math.pi * 0.2) * math.cos(2 * math.pi * 0.05 * t)
+            w_y = 0.3 * (2 * math.pi * 0.2) * math.cos(2 * math.pi * 0.04 * t)
+            w_z = 0.3 * (2 * math.pi * 0.2) * math.cos(2 * math.pi * 0.06 * t)
+
+
+            noisy_roll = roll + np.random.normal(0, 0.02)
+            noisy_w_x = w_x + np.random.normal(0, 0.005)
+            noisy_pitch = pitch + np.random.normal(0, 0.02)
+            noisy_w_y = w_y + np.random.normal(0, 0.005)
             noisy_yaw = yaw + np.random.normal(0, 0.02)
             noisy_w_z = w_z + np.random.normal(0, 0.005)
+            
 
-            r = R.from_euler('xyz', [0.0, 0.0, noisy_yaw])
+            r = R.from_euler('xyz', [noisy_roll, noisy_pitch, noisy_yaw])
             quat = r.as_quat()
 
             msg.orientation.x = quat[0]
@@ -55,6 +66,8 @@ class MultiIMUPublisher(Node):
             msg.orientation.z = quat[2]
             msg.orientation.w = quat[3]
 
+            msg.angular_velocity.x = noisy_w_x
+            msg.angular_velocity.y = noisy_w_y
             msg.angular_velocity.z = noisy_w_z
 
             pub.publish(msg)
